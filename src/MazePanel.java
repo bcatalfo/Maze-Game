@@ -1,25 +1,19 @@
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
-import java.awt.GraphicsConfiguration;
-import java.awt.GraphicsDevice;
-import java.awt.GraphicsEnvironment;
+import java.awt.Image;
 import java.awt.Toolkit;
-import java.awt.Transparency;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 
 import javax.imageio.ImageIO;
 import javax.swing.JPanel;
-import javax.swing.Timer;
 import java.util.ArrayList;
 
 public class MazePanel extends JPanel implements KeyListener, ActionListener, MouseListener{
@@ -53,21 +47,11 @@ public class MazePanel extends JPanel implements KeyListener, ActionListener, Mo
         	}
         }
         this.first = true;
-        //repaint();
-        //Timer listener = new Timer(1000/20, this);
-        //listener.start();
+
     }
 
     //paint a ball
     public void paintComponent(Graphics g){
-    	/*
-    	GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
-        GraphicsDevice device = env.getDefaultScreenDevice();
-        GraphicsConfiguration config = device.getDefaultConfiguration();
-        BufferedImage buffy = config.createCompatibleImage(width, height, Transparency.TRANSLUCENT);
-        g = buffy.getGraphics();
-	*/
-        //super.paintComponent(g); //get background stuff
         screenSize = Toolkit.getDefaultToolkit().getScreenSize(); //get screen dimensions
         double scalingFactor = .75;
         //use the screen size to determine the ideal tile size
@@ -92,29 +76,33 @@ public class MazePanel extends JPanel implements KeyListener, ActionListener, Mo
         for (int row = 0; row < maze.length; row++) {
         	for (int col = 0; col < maze[0].length; col++) {
         		try {
-        			URL imgFile;
+        			Image image;
+        			Toolkit t = Toolkit.getDefaultToolkit();
         			if (maze[row][col].getType() == TileType.WALL) {
-        				imgFile = getClass().getResource("/Images/wallPixelArt.jpg");
+        				image = t.getImage(getClass().getResource("/Images/wallPixelArt.jpg"));
         			}
         			else if (maze[row][col].getType() == TileType.DOOR && maze[row][col].isWalkable()) {
-        				imgFile = getClass().getResource("/Images/openDoor.png");
+        				image = t.getImage(getClass().getResource("/Images/openDoor.png"));
         			}
         			else if (maze[row][col].getType() == TileType.DOOR && !maze[row][col].isWalkable()) {
-        				imgFile = getClass().getResource("/Images/closedDoor.jpg");
+        				image = t.getImage(getClass().getResource("/Images/closedDoor.jpg"));
         			}
         			else if (maze[row][col].getType() == TileType.LOCKED_DOOR) {
-        				imgFile = getClass().getResource("/Images/lockedDoor.png");
+        				image = t.getImage(getClass().getResource("/Images/lockedDoor.png"));
         			}
         			else if (maze[row][col].getType() == TileType.FLOOR) {
-        				imgFile = getClass().getResource("Images/tilePixelArt.png");
+        				image = t.getImage(getClass().getResource("Images/tilePixelArt.png"));
+        			}
+        			else if (maze[row][col].getType() == TileType.PORTAL) {
+        				image = t.getImage(getClass().getResource("Images/portal.png"));
         			}
         			else {
-        				imgFile = getClass().getResource("Images/key.png");
+        				image = t.getImage(getClass().getResource("Images/key.png"));
         			}
         			//System.out.println("changedTiles.size(): " + changedTiles.size());
         			for (int i = 0; i < changedTiles.size(); i++) {
         				if (changedTiles.get(i).get(0) == row && changedTiles.get(i).get(1) == col) {
-        					g.drawImage(ImageIO.read(imgFile), row*tileSize + (screenSize.width - maze.length * tileSize)/2, col*tileSize + (screenSize.height - maze[0].length * tileSize)/2, tileSize, tileSize, Color.WHITE, this);
+        					g.drawImage(image, row*tileSize + (screenSize.width - maze.length * tileSize)/2, col*tileSize + (screenSize.height - maze[0].length * tileSize)/2, tileSize, tileSize, Color.WHITE, this);
         				}
         			}
 					
@@ -217,6 +205,21 @@ public class MazePanel extends JPanel implements KeyListener, ActionListener, Mo
 	        		this.first = false;
 	        	}
 	            break;
+	        case KeyEvent.VK_ENTER:
+	        	//handle enter key for going through portals
+	        	if (maze[playerY][playerX].getType() == TileType.PORTAL) {
+	        		ArrayList<Integer> temp = new ArrayList<>();
+	        		temp.add(maze[playerY][playerX].relatedRow());
+	        		temp.add(maze[playerY][playerX].relatedCol());
+	        		changedTiles.add(temp);
+	        		ArrayList<Integer> temp2 = new ArrayList<>();
+	        		temp2.add(playerY);
+	        		temp2.add(playerX);
+	        		changedTiles.add(temp2);
+	        		playerY = maze[playerY][playerX].relatedRow();
+	        		playerX = maze[playerY][playerX].relatedCol();
+	        		this.first = false;
+	        	}
 	     }
 	    if (maze[playerY][playerX].getType() == TileType.KEY) {
 	    	int row = maze[playerY][playerX].relatedRow();

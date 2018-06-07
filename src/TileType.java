@@ -1,4 +1,4 @@
 
 public enum TileType {
-	WALL, FLOOR, DOOR, LOCKED_DOOR, KEY
+	WALL, FLOOR, DOOR, LOCKED_DOOR, KEY, PORTAL
 }

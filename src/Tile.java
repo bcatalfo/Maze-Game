@@ -19,8 +19,11 @@ public class Tile {
 			this.hasKey = false;
 			this.walkable = false;
 		}
-		else {
+		else if (this.type == TileType.PORTAL) {
 			this.walkable = true;
+		}
+		else {
+			this.walkable = true; //for TileType.FLOOR
 		}
 	}
 	

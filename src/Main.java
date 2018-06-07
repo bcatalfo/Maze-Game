@@ -5,6 +5,7 @@ import java.awt.GraphicsEnvironment;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -38,6 +39,12 @@ public class Main{
         	for (int j = 0; j < exampleSize; j++) {
         		if (i == 1 && j == 1) {
         			exampleMaze[i][j] = new Tile(TileType.DOOR);
+        		}
+        		else if (i == 3 && j == 5) {
+        			exampleMaze[i][j] = new Tile(TileType.PORTAL, 3, 1);
+        		}
+        		else if (i == 3 && j == 1) {
+        			exampleMaze[i][j] = new Tile(TileType.PORTAL, 3, 5);
         		}
         		else if (i == 3 && j == 3) {
         			exampleMaze[i][j] = new Tile(TileType.LOCKED_DOOR);
