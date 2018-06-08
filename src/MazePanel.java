@@ -36,6 +36,8 @@ public class MazePanel extends JPanel implements KeyListener, ActionListener, Mo
 	private boolean inStartMenu;
 	private boolean addedButton;
 	private boolean justSwitched;
+	public Music audio;
+	public OtherMusic otherAudio;
     //construct a PongPanel
     public MazePanel(int width, int height, Tile[][] maze){
         setBackground(Color.WHITE);
@@ -48,6 +50,8 @@ public class MazePanel extends JPanel implements KeyListener, ActionListener, Mo
         this.addedButton = false;
         this.inStartMenu = true;
         this.justSwitched = false;
+        audio = new Music();
+        otherAudio = new OtherMusic();
         this.setFocusable(true);
         this.addKeyListener(this);
         this.addMouseListener(this);
@@ -92,7 +96,8 @@ public class MazePanel extends JPanel implements KeyListener, ActionListener, Mo
         			//this.remove(component);
         		//}
         	//}
-        	
+        	audio.stronger();
+			otherAudio.play();
         	if (this.justSwitched) {
         		this.removeAll();
             	this.revalidate();
