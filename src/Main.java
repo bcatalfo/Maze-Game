@@ -52,6 +52,9 @@ public class Main{
         		else if (i == 3 && j == 6) {
         			exampleMaze[i][j] = new Tile(TileType.KEY, 3, 3);
         		}
+        		else if (i == 6 && j == 6) {
+        			exampleMaze[i][j] = new Tile(TileType.FINISH_FLAG);
+        		}
         		else if (i == j) {
         			exampleMaze[i][j] = new Tile(TileType.WALL);
         		}

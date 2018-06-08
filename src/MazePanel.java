@@ -1,5 +1,7 @@
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.Toolkit;
@@ -13,7 +15,11 @@ import java.io.IOException;
 import java.net.URL;
 
 import javax.imageio.ImageIO;
+import javax.swing.JButton;
+import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
+
 import java.util.ArrayList;
 
 public class MazePanel extends JPanel implements KeyListener, ActionListener, MouseListener{
@@ -26,6 +32,10 @@ public class MazePanel extends JPanel implements KeyListener, ActionListener, Mo
 	public int tileSize;
 	public Dimension screenSize;
 	public boolean first;
+	private boolean gameOver;
+	private boolean inStartMenu;
+	private boolean addedButton;
+	private boolean justSwitched;
     //construct a PongPanel
     public MazePanel(int width, int height, Tile[][] maze){
         setBackground(Color.WHITE);
@@ -34,6 +44,10 @@ public class MazePanel extends JPanel implements KeyListener, ActionListener, Mo
         this.maze = maze;
         this.playerY = 0;
         this.playerX = 0;
+        this.gameOver = false;
+        this.addedButton = false;
+        this.inStartMenu = true;
+        this.justSwitched = false;
         this.setFocusable(true);
         this.addKeyListener(this);
         this.addMouseListener(this);
@@ -54,73 +68,118 @@ public class MazePanel extends JPanel implements KeyListener, ActionListener, Mo
     public void paintComponent(Graphics g){
         screenSize = Toolkit.getDefaultToolkit().getScreenSize(); //get screen dimensions
         double scalingFactor = .75;
-        //use the screen size to determine the ideal tile size
-        
-        if (screenSize.height > screenSize.width) {
-        	if (maze.length > maze[0].length) {
-        		tileSize = (int) (screenSize.width * scalingFactor / maze[0].length);
+        int side = Math.min(screenSize.height, screenSize.width);
+        if (this.inStartMenu) {
+        	if (!this.addedButton) {
+        		JButton playButton = new JButton("Play Game");
+        		playButton.addActionListener(new MazeListener(this));
+        		playButton.setBounds((int)(side*.25), (int)(side*.25), (int)(side*.15), (int)(side*.15));
+        	
+        		this.add(playButton);
+        		addedButton = true;
         	}
-        	else {
-        		tileSize = (int) (screenSize.width * scalingFactor / maze.length);
-        	}
+        }
+        else if (this.gameOver) {
+        	super.paintComponent(g);
+        	g.clearRect((int)(side*.5), (int)(side*.5), (int)(side*.75), (int)(side*.75));
+			Font f = g.getFont().deriveFont(30f);
+			g.setFont(f);
+			g.drawString("You won!",(int)(screenSize.width*.5),(int)(screenSize.height*.5));
         }
         else {
-        	if (maze.length > maze[0].length) {
-        		tileSize = (int) (screenSize.height * scalingFactor / maze[0].length);
+        	//for (Component component: this.getComponents()) {
+        		//if (!component.getName().equals("Quit")) {
+        			//this.remove(component);
+        		//}
+        	//}
+        	
+        	if (this.justSwitched) {
+        		this.removeAll();
+            	this.revalidate();
+            	this.requestFocus();
+        		super.paintComponent(g);
+        		JButton exitButton = new JButton("Quit");
+        		JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
+                exitButton.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        topFrame.setVisible(false);
+                        topFrame.dispose();
+                    }
+                });
+                this.add(exitButton);
+        		this.justSwitched = false;
         	}
-        	else {
-        		tileSize = (int) (screenSize.height * scalingFactor / maze.length);
-        	}
-        }
-        //Draw tiles
-        for (int row = 0; row < maze.length; row++) {
-        	for (int col = 0; col < maze[0].length; col++) {
-        		try {
-        			Image image;
-        			Toolkit t = Toolkit.getDefaultToolkit();
-        			if (maze[row][col].getType() == TileType.WALL) {
-        				image = t.getImage(getClass().getResource("/Images/wallPixelArt.jpg"));
-        			}
-        			else if (maze[row][col].getType() == TileType.DOOR && maze[row][col].isWalkable()) {
-        				image = t.getImage(getClass().getResource("/Images/openDoor.png"));
-        			}
-        			else if (maze[row][col].getType() == TileType.DOOR && !maze[row][col].isWalkable()) {
-        				image = t.getImage(getClass().getResource("/Images/closedDoor.jpg"));
-        			}
-        			else if (maze[row][col].getType() == TileType.LOCKED_DOOR) {
-        				image = t.getImage(getClass().getResource("/Images/lockedDoor.png"));
-        			}
-        			else if (maze[row][col].getType() == TileType.FLOOR) {
-        				image = t.getImage(getClass().getResource("Images/tilePixelArt.png"));
-        			}
-        			else if (maze[row][col].getType() == TileType.PORTAL) {
-        				image = t.getImage(getClass().getResource("Images/portal.png"));
-        			}
-        			else {
-        				image = t.getImage(getClass().getResource("Images/key.png"));
-        			}
-        			//System.out.println("changedTiles.size(): " + changedTiles.size());
-        			for (int i = 0; i < changedTiles.size(); i++) {
-        				if (changedTiles.get(i).get(0) == row && changedTiles.get(i).get(1) == col) {
-        					g.drawImage(image, row*tileSize + (screenSize.width - maze.length * tileSize)/2, col*tileSize + (screenSize.height - maze[0].length * tileSize)/2, tileSize, tileSize, Color.WHITE, this);
-        				}
-        			}
-					
-				} catch (Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-        	}
-        }
-        //Draw player
-        try {
-			g.drawImage(ImageIO.read(getClass().getResource("/Images/kanyePixelArt.jpg")), playerY * tileSize + (screenSize.width - maze.length * tileSize)/2, playerX*tileSize + (screenSize.height - maze[0].length * tileSize)/2, (int) (tileSize * 1.00), (int) (tileSize * 1.00), this);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-        if (!this.first) {
-        	changedTiles.clear();
+	        //use the screen size to determine the ideal tile size
+	        if (screenSize.height > screenSize.width) {
+	        	if (maze.length > maze[0].length) {
+	        		tileSize = (int) (screenSize.width * scalingFactor / maze[0].length);
+	        	}
+	        	else {
+	        		tileSize = (int) (screenSize.width * scalingFactor / maze.length);
+	        	}
+	        }
+	        else {
+	        	if (maze.length > maze[0].length) {
+	        		tileSize = (int) (screenSize.height * scalingFactor / maze[0].length);
+	        	}
+	        	else {
+	        		tileSize = (int) (screenSize.height * scalingFactor / maze.length);
+	        	}
+	        }
+	        //Draw tiles
+	        for (int row = 0; row < maze.length; row++) {
+	        	for (int col = 0; col < maze[0].length; col++) {
+	        		try {
+	        			Image image;
+	        			Toolkit t = Toolkit.getDefaultToolkit();
+	        			if (maze[row][col].getType() == TileType.WALL) {
+	        				image = t.getImage(getClass().getResource("/Images/wallPixelArt.jpg"));
+	        			}
+	        			else if (maze[row][col].getType() == TileType.DOOR && maze[row][col].isWalkable()) {
+	        				image = t.getImage(getClass().getResource("/Images/openDoor.png"));
+	        			}
+	        			else if (maze[row][col].getType() == TileType.DOOR && !maze[row][col].isWalkable()) {
+	        				image = t.getImage(getClass().getResource("/Images/closedDoor.jpg"));
+	        			}
+	        			else if (maze[row][col].getType() == TileType.LOCKED_DOOR) {
+	        				image = t.getImage(getClass().getResource("/Images/lockedDoor.png"));
+	        			}
+	        			else if (maze[row][col].getType() == TileType.FLOOR) {
+	        				image = t.getImage(getClass().getResource("Images/tilePixelArt.png"));
+	        			}
+	        			else if (maze[row][col].getType() == TileType.PORTAL) {
+	        				image = t.getImage(getClass().getResource("Images/portal.png"));
+	        			}
+	        			else if (maze[row][col].getType() == TileType.KEY) {
+	        				image = t.getImage(getClass().getResource("Images/key.png"));
+	        			}
+	        			else {
+	        				image = t.getImage(getClass().getResource("Images/finish.png"));
+	        			}
+	        			//System.out.println("changedTiles.size(): " + changedTiles.size());
+	        			for (int i = 0; i < changedTiles.size(); i++) {
+	        				if (changedTiles.get(i).get(0) == row && changedTiles.get(i).get(1) == col) {
+	        					g.drawImage(image, row*tileSize + (screenSize.width - maze.length * tileSize)/2, col*tileSize + (screenSize.height - maze[0].length * tileSize)/2, tileSize, tileSize, Color.WHITE, this);
+	        				}
+	        			}
+						
+					} catch (Exception e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+	        	}
+	        }
+	        //Draw player
+	        try {
+				g.drawImage(ImageIO.read(getClass().getResource("/Images/kanyePixelArt.jpg")), playerY * tileSize + (screenSize.width - maze.length * tileSize)/2, playerX*tileSize + (screenSize.height - maze[0].length * tileSize)/2, (int) (tileSize * 1.00), (int) (tileSize * 1.00), this);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+	        if (!this.first) {
+	        	changedTiles.clear();
+	        }
         }
         
     }
@@ -227,6 +286,9 @@ public class MazePanel extends JPanel implements KeyListener, ActionListener, Mo
 	    	maze[row][col].getKey();
 	    	maze[playerY][playerX] = new Tile(TileType.FLOOR);
 	    }
+	    else if (maze[playerY][playerX].getType() == TileType.FINISH_FLAG) {
+	    	this.gameOver = true;
+	    }
 	    if (!this.first) {
 			repaint();
 		}
@@ -316,6 +378,15 @@ public class MazePanel extends JPanel implements KeyListener, ActionListener, Mo
 	public void mouseReleased(MouseEvent arg0) {
 		// TODO Auto-generated method stub
 		
+	}
+	
+	public void playPressed() {
+		this.inStartMenu = false;
+		this.justSwitched = true;
+		//playButton.setVisible(false);
+		//this.remove(playButton);
+		//this.setLayout(null);
+		repaint();
 	}
 
 }
